@@ -1,0 +1,27 @@
+{
+  "name": "node-chat",
+  "version": "0.0.0",
+  "description": "Real time Chat Implemented with NodeJS, Socket.io and ExpressJS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lysov/node-chat.git"
+  },
+  "keywords": [
+    "chat",
+    "demo"
+  ],
+  "author": "Anton Lysov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lysov/node-chat/issues"
+  },
+  "homepage": "https://github.com/lysov/node-chat#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2"
+  }
+}
