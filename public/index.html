@@ -5,6 +5,20 @@
     <title>Node Chat</title>
 </head>
 <body>
-  Hello World!
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket = io();
+
+    socket.on('auth', function (nickname) {
+      console.log('My nickname is: ' + nickname + ' ');
+    });
+
+
+
+  </script>
+  <p>
+    Your Name: <span class="name">Anton</span><br>
+    Users Online: <span class="users-online">Anton, Anton, Anton</span>
+  </p>
 </body>
 </html>
