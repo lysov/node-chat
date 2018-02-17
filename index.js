@@ -13,6 +13,11 @@ const hex_rgb = require('hex-rgb');
 
 let port = 8080;
 
+let users = [];
+let current_unique_id = 0;
+
+let messages = {};
+
 server.listen(port, function() {
   console.log('listening on port ' + port + '.');
 });
@@ -29,20 +34,22 @@ io.on('connection', function(socket) {
       console.log('Error');
     } else {
       console.log("The new user has been given '" + nickname + "' nickname.");
-      socket.emit('nickname', nickname);
+      users[nickname] = current_unique_id;
+      current_unique_id++;
+      socket.emit('nickname', nickname, messages);
       socket.on('disconnect', function() {
         console.log("A user with '" + nickname + "' has disconnected.");
       });
     }
   });
 
-  socket.on('new_message', function (message) {
+  socket.on('new_message_from_client', function (message) {
 
-    let command = message.substring(0, 11);
+    let command = message.text.substring(0, 11);
 
     if (command !== undefined && command === "/nickcolor ") {
 
-      let new_nickname_color = message.substring(11, 17);
+      let new_nickname_color = message.text.substring(11, 17);
 
       try {
         let new_nickname_color_rgb = hex_rgb(new_nickname_color);
@@ -52,17 +59,31 @@ io.on('connection', function(socket) {
       }
     } else {
 
-      let command = message.substring(0, 6);
+      let command = message.text.substring(0, 6);
 
       if (command !== undefined && command === "/nick ") {
 
-        let new_nickname = message.substring(6);
+        let new_nickname = message.text.substring(6);
+
+        let id = users[message.auhtor];
+        users[new_nickname] = id;
+        users[id] = null;
 
         socket.emit('nickname', new_nickname);
 
       } else {
+
         // simple message
-        console.log("New massage has been recieved: '" + message + "'.");
+
+        let timestamp = Date.now();
+        message.timestamp = timestamp;
+
+        messages[timestamp] = message;
+
+        console.log("New massage has been recieved: '" + message.text + "'.");
+
+        // TODO: broadcast to all the users
+        io.sockets.emit('new_message_from_server', message);
       }
     }
   });
@@ -108,4 +129,10 @@ String.prototype.capitalized = function() {
 
   return array.join(" ");
 
+}
+
+function Message(author, text, timestamp) {
+  this.author = author;
+  this.text = text;
+  this.timestamp = timestamp;
 }

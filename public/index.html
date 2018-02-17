@@ -10,8 +10,15 @@
   <script>
     let socket = io();
 
-    socket.on('nickname', function (nickname) {
+    socket.on('nickname', function (nickname, messages) {
       $(".name").text(nickname);
+      console.log(messages);
+    });
+
+    socket.on('new_message_from_server', function (new_message) {
+      // a new message from server
+      console.log('New message from the server');
+      console.log(new_message);
     });
 
     socket.on('nickname_color', function (obj) {
@@ -24,8 +31,11 @@
   $(document).ready(function() {
     $(".message_text_field").on("keyup", function (e) {
     if (e.keyCode == 13) {
-      let message = $(".message_text_field").val();
-      socket.emit('new_message', message);
+      let author = $(".name").text();
+      let text = $(this).val();
+      let message = {"author": author, "text": text};
+      console.log(message);
+      socket.emit('new_message_from_client', message);
       $(this).val("");
     }
     });
