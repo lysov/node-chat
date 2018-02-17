@@ -12,47 +12,56 @@ let fs = require('fs');
 let port = 8080;
 
 server.listen(port, function() {
-
   console.log('listening on port ' + port + '.');
-
 });
 
 app.get('/', function(req, res) {
-
   res.sendFile(path.join(__dirname, './public', 'index.html'));
-
 });
 
 io.on('connection', function(socket) {
-
   console.log("A new user has connected.");
 
   random_nickname(function(nickname, error) {
-
     if (error) {
-
       console.log('Error');
+    } else {
+      console.log("The new user has been given '" + nickname + "' nickname.");
+      socket.emit('nickname', nickname);
+      socket.on('disconnect', function() {
+        console.log("A user with '" + nickname + "' has disconnected.");
+      });
+    }
+  });
+
+  socket.on('new_message', function (message) {
+
+    let command = message.substring(0, 5);
+
+    if (command !== undefined && command === "/nick") {
+
+      let new_nickname = message.substring(6);
+
+      socket.emit('nickname', new_nickname);
 
     } else {
 
-      console.log("The new user has been given '" + nickname + "' nickname.");
-      
-      socket.emit('auth', nickname);
+      let command = message.substring(0, 10);
 
-      socket.on('disconnect', function() {
+      if (command !== undefined && command === "/nickcolor") {
 
-        console.log("A user with '" + nickname + "' has disconnected.");
+      } else {
 
-      });
+        // simple message
+        console.log("New massage has been recieved: '" + message + "'.");
 
+      }
     }
-
   });
-
 });
 
 /*
-  Returns a ranom nickname.
+  Returns a random nickname.
 
   Asynchronous.
 */

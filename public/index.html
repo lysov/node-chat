@@ -3,22 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>Node Chat</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </head>
 <body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     let socket = io();
 
-    socket.on('auth', function (nickname) {
-      console.log('My nickname is: ' + nickname + ' ');
+    socket.on('nickname', function (nickname) {
+      $(".name").text(nickname);
     });
-
-
-
   </script>
+
+  <script>
+  $(document).ready(function() {
+    $(".message_text_field").on("keyup", function (e) {
+    if (e.keyCode == 13) {
+      let message = $(".message_text_field").val();
+      socket.emit('new_message', message);
+      $(this).val("");
+    }
+    });
+    $(".message_text_field").click(function() {
+      if ($(this).val() === "Write message...") {
+        $(this).val("");
+      }
+    });
+    $(document).on('click', function(event) {
+  		if (!$(event.target).closest(".message_text_field").length) {
+        if ($(".message_text_field").val() === "") {
+          $(".message_text_field").val("Write message...");
+        }
+  		}
+  	});
+  });
+</script>
   <p>
     Your Name: <span class="name">Anton</span><br>
     Users Online: <span class="users-online">Anton, Anton, Anton</span>
   </p>
+  <input type="text" class="message_text_field" value="Write message...">
 </body>
 </html>
