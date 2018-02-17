@@ -13,6 +13,11 @@
     socket.on('nickname', function (nickname) {
       $(".name").text(nickname);
     });
+
+    socket.on('nickname_color', function (obj) {
+      console.log(obj);
+      $(".name").css("color", 'rgb(' + obj.red + ',' + obj.green + ',' + obj.blue + ')');
+    });
   </script>
 
   <script>

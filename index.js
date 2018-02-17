@@ -9,6 +9,8 @@ let io = require('socket.io')(server);
 let path = require('path');
 let fs = require('fs');
 
+const hex_rgb = require('hex-rgb');
+
 let port = 8080;
 
 server.listen(port, function() {
@@ -36,25 +38,31 @@ io.on('connection', function(socket) {
 
   socket.on('new_message', function (message) {
 
-    let command = message.substring(0, 5);
+    let command = message.substring(0, 11);
 
-    if (command !== undefined && command === "/nick") {
+    if (command !== undefined && command === "/nickcolor ") {
 
-      let new_nickname = message.substring(6);
+      let new_nickname_color = message.substring(11, 17);
 
-      socket.emit('nickname', new_nickname);
-
+      try {
+        let new_nickname_color_rgb = hex_rgb(new_nickname_color);
+        socket.emit('nickname_color', new_nickname_color_rgb);
+      } catch (error) {
+        console.log("Invalid /nickcolor command");
+      }
     } else {
 
-      let command = message.substring(0, 10);
+      let command = message.substring(0, 6);
 
-      if (command !== undefined && command === "/nickcolor") {
+      if (command !== undefined && command === "/nick ") {
+
+        let new_nickname = message.substring(6);
+
+        socket.emit('nickname', new_nickname);
 
       } else {
-
         // simple message
         console.log("New massage has been recieved: '" + message + "'.");
-
       }
     }
   });
