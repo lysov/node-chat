@@ -10,40 +10,71 @@
   <script>
     let socket = io();
 
-    socket.on('nickname', function (nickname, messages) {
+    // gets a new nickname
+    socket.on('new_nickname', function (nickname) {
       $(".name").text(nickname);
-      console.log(messages);
     });
 
+    // gets a new nickname and message history
+    socket.on('nickname_and_message_history', function (nickname, messages) {
+
+      $(".name").text(nickname);
+
+      messages.forEach(function(message) {
+        let timestamp = message.timestamp;
+        let date = new Date(timestamp);
+        let time = date.getHours() + ':' + date.getMinutes();
+        let author = message.author;
+        let text = message.text;
+        $('.messages').append('<li>' + time + ' ' + author + ': ' + text + '</li>');
+      });
+    });
+
+    // gets a new message from the server
     socket.on('new_message_from_server', function (new_message) {
-      // a new message from server
+
+      // TODO: delete the code below
       console.log('New message from the server');
       console.log(new_message);
+
+      let timestamp = new_message.timestamp;
+      let date = new Date(timestamp);
+      let time = date.getHours() + ':' + date.getMinutes();
+      let author = new_message.author;
+      let text = new_message.text;
+      $('.messages').append('<li>' + time + ' ' + author + ': '+ text + '</li>');
     });
 
+    // gets a nre nickname color
     socket.on('nickname_color', function (obj) {
-      console.log(obj);
       $(".name").css("color", 'rgb(' + obj.red + ',' + obj.green + ',' + obj.blue + ')');
     });
   </script>
 
   <script>
+  // sends a new message
   $(document).ready(function() {
     $(".message_text_field").on("keyup", function (e) {
     if (e.keyCode == 13) {
       let author = $(".name").text();
       let text = $(this).val();
       let message = {"author": author, "text": text};
+      // TODO: delete the code below
+      console.log('Sending a new message to the server');
       console.log(message);
       socket.emit('new_message_from_client', message);
       $(this).val("");
     }
     });
+
+    // removes a placeholder from the text field
     $(".message_text_field").click(function() {
       if ($(this).val() === "Write message...") {
         $(this).val("");
       }
     });
+
+    // places a placeholder if a user has not typed anything
     $(document).on('click', function(event) {
   		if (!$(event.target).closest(".message_text_field").length) {
         if ($(".message_text_field").val() === "") {
@@ -54,8 +85,12 @@
   });
 </script>
   <p>
-    Your Name: <span class="name">Anton</span><br>
-    Users Online: <span class="users-online">Anton, Anton, Anton</span>
+    You've logged in as <span class="name">Anton</span>.<br>
+    Users Online<br>
+    <ul class="users-online">
+    </ul>
+    <ul class="messages">
+    </ul>
   </p>
   <input type="text" class="message_text_field" value="Write message...">
 </body>

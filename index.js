@@ -16,7 +16,7 @@ let port = 8080;
 let users = [];
 let current_unique_id = 0;
 
-let messages = {};
+let messages = [];
 
 server.listen(port, function() {
   console.log('listening on port ' + port + '.');
@@ -27,6 +27,7 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+
   console.log("A new user has connected.");
 
   random_nickname(function(nickname, error) {
@@ -36,7 +37,7 @@ io.on('connection', function(socket) {
       console.log("The new user has been given '" + nickname + "' nickname.");
       users[nickname] = current_unique_id;
       current_unique_id++;
-      socket.emit('nickname', nickname, messages);
+      socket.emit('nickname_and_message_history', nickname, messages);
       socket.on('disconnect', function() {
         console.log("A user with '" + nickname + "' has disconnected.");
       });
@@ -69,7 +70,7 @@ io.on('connection', function(socket) {
         users[new_nickname] = id;
         users[id] = null;
 
-        socket.emit('nickname', new_nickname);
+        socket.emit('new_nickname', new_nickname);
 
       } else {
 
@@ -78,7 +79,7 @@ io.on('connection', function(socket) {
         let timestamp = Date.now();
         message.timestamp = timestamp;
 
-        messages[timestamp] = message;
+        messages.push(message);
 
         console.log("New massage has been recieved: '" + message.text + "'.");
 
