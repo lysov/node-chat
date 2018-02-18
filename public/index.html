@@ -20,13 +20,20 @@
 
       $(".name").text(nickname);
 
+      // TODO: color the author nickname
+      // check if the client is the author
       messages.forEach(function(message) {
         let timestamp = message.timestamp;
         let date = new Date(timestamp);
-        let time = date.getHours() + ':' + date.getMinutes();
-        let author = message.author;
+        let hours = date.getHours();
+        let minutes = date.getMinutes() >= 10 ? date.getMinutes() : '0' + date.getMinutes();
+        let time = hours + ':' + minutes;
+        let author = message.author_nickname;
         let text = message.text;
-        $('.messages').append('<li>' + time + ' ' + author + ': ' + text + '</li>');
+        let author_nickname_color = message.author_nickname_color;
+        let author_nickname_color_rgb = 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')';
+        $('.messages').append('<li>' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
+        //$('.messages').append('<li style="color:' + 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')">' + time + ' ' + author + ': ' + text + '</li>');
       });
     });
 
@@ -39,14 +46,19 @@
 
       let timestamp = new_message.timestamp;
       let date = new Date(timestamp);
-      let time = date.getHours() + ':' + date.getMinutes();
-      let author = new_message.author;
+      let hours = date.getHours();
+      let minutes = date.getMinutes() >= 10 ? date.getMinutes() : '0' + date.getMinutes();
+      let time = hours + ':' + minutes;
+      let author = new_message.author_nickname;
       let text = new_message.text;
-      $('.messages').append('<li>' + time + ' ' + author + ': '+ text + '</li>');
+      let author_nickname_color = new_message.author_nickname_color;
+      let author_nickname_color_rgb = 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')';
+      $('.messages').append('<li>' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
     });
 
     // gets a nre nickname color
     socket.on('nickname_color_did_change', function (obj) {
+      console.log(obj);
       $(".name").css("color", 'rgb(' + obj.red + ',' + obj.green + ',' + obj.blue + ')');
     });
 
@@ -72,7 +84,7 @@
     if (e.keyCode == 13) {
       let author = $(".name").text();
       let text = $(this).val();
-      let message = {"author": author, "text": text};
+      let message = {"author_nickname": author, "text": text};
       // TODO: delete the code below
       console.log('Sending a new message to the server');
       console.log(message);

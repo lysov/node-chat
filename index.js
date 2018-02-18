@@ -36,7 +36,8 @@ io.on('connection', function(socket) {
     } else {
       console.log("The new user has been given '" + nickname + "' nickname.");
       let logged_out_user_id = current_unique_id;
-      users_online.push({"id": current_unique_id, "nickname": nickname, "nickname-color": null});
+      let nickname_color = {"alpha": 255, "blue": 0, "green": 0, "red": 0};
+      users_online.push({"user_id": current_unique_id, "nickname": nickname, "nickname_color": nickname_color});
       current_unique_id++;
       socket.emit('nickname_and_message_history', nickname, messages);
       io.sockets.emit('users_online_did_change', users_online);
@@ -65,6 +66,15 @@ io.on('connection', function(socket) {
 
       try {
         let new_nickname_color_rgb = hex_rgb(new_nickname_color);
+
+        // TODO: change to users
+        // changes a nickname_color in users_online
+        users_online.forEach(function(user_online) {
+          if (message.author_nickname === user_online.nickname) {
+            user_online.nickname_color = new_nickname_color_rgb;
+          }
+        });
+
         socket.emit('nickname_color_did_change', new_nickname_color_rgb);
       } catch (error) {
         console.log("Invalid /nickcolor command");
@@ -75,9 +85,11 @@ io.on('connection', function(socket) {
 
       if (command !== undefined && command === "/nick ") {
 
-        let old_nickname = message.author;
+        let old_nickname = message.author_nickname;
         let new_nickname = message.text.substring(6);
 
+        console.log("users_online");
+        console.log(users_online);
         // TODO: replace this to users
         users_online.forEach(function(user_online) {
 
@@ -88,26 +100,40 @@ io.on('connection', function(socket) {
 
           // updates a nickname
           if (user_online.nickname === old_nickname) {
+            console.log('sup');
             user_online.nickname = new_nickname;
+            return user_online;
           }
         });
 
+        console.log(users_online);
+
         socket.emit('nickname_did_change', new_nickname);
         io.sockets.emit('users_online_did_change', users_online);
+
 
       } else {
 
         // simple message
 
-        let timestamp = Date.now();
-        message.timestamp = timestamp;
+        users_online.forEach(function(user_online) {
+          if (message.author_nickname === user_online.nickname) {
 
-        messages.push(message);
+            console.log(message);
 
-        console.log("New massage has been recieved: '" + message.text + "'.");
+            message.author_nickname_color = user_online.nickname_color;
 
-        // TODO: broadcast to all the users
-        io.sockets.emit('new_message_from_server', message);
+            console.log(message);
+
+            message.timestamp = Date.now();
+            messages.push(message);
+
+            console.log("New massage has been recieved: '" + message.text + "'.");
+
+            // TODO: broadcast to all the users
+            io.sockets.emit('new_message_from_server', message);
+          }
+        });
       }
     }
   });
