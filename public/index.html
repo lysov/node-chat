@@ -11,7 +11,7 @@
     let socket = io();
 
     // gets a new nickname
-    socket.on('new_nickname', function (nickname) {
+    socket.on('nickname_did_change', function (nickname) {
       $(".name").text(nickname);
     });
 
@@ -46,8 +46,23 @@
     });
 
     // gets a nre nickname color
-    socket.on('nickname_color', function (obj) {
+    socket.on('nickname_color_did_change', function (obj) {
       $(".name").css("color", 'rgb(' + obj.red + ',' + obj.green + ',' + obj.blue + ')');
+    });
+
+    // gets a nre nickname color
+    socket.on('users_online_did_change', function (users) {
+
+      console.log("users_online_did_change");
+      console.log(users);
+
+      $('.users_online').empty();
+
+      users.map(function(user) {
+        if (user !== null) {
+          $('.users_online').append('<li>' + user + '</li>')
+        }
+      });
     });
   </script>
 
@@ -87,8 +102,9 @@
   <p>
     You've logged in as <span class="name">Anton</span>.<br>
     Users Online<br>
-    <ul class="users-online">
+    <ul class="users_online">
     </ul>
+    Messages<br>
     <ul class="messages">
     </ul>
   </p>

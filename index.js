@@ -13,7 +13,7 @@ const hex_rgb = require('hex-rgb');
 
 let port = 8080;
 
-let users = [];
+let users_online = [];
 let current_unique_id = 0;
 
 let messages = [];
@@ -35,11 +35,19 @@ io.on('connection', function(socket) {
       console.log('Error');
     } else {
       console.log("The new user has been given '" + nickname + "' nickname.");
-      users[nickname] = current_unique_id;
+      let logged_out_user_id = current_unique_id;
+      users_online[current_unique_id] = nickname;
       current_unique_id++;
       socket.emit('nickname_and_message_history', nickname, messages);
+      io.sockets.emit('users_online_did_change', users_online);
+
       socket.on('disconnect', function() {
-        console.log("A user with '" + nickname + "' has disconnected.");
+
+        users_online[logged_out_user_id] = null;
+
+        console.log("A user with '" + logged_out_user_id + "' id has disconnected.");
+
+        io.sockets.emit('users_online_did_change', users_online);
       });
     }
   });
@@ -54,7 +62,7 @@ io.on('connection', function(socket) {
 
       try {
         let new_nickname_color_rgb = hex_rgb(new_nickname_color);
-        socket.emit('nickname_color', new_nickname_color_rgb);
+        socket.emit('nickname_color_did_change', new_nickname_color_rgb);
       } catch (error) {
         console.log("Invalid /nickcolor command");
       }
@@ -64,13 +72,28 @@ io.on('connection', function(socket) {
 
       if (command !== undefined && command === "/nick ") {
 
+        let old_nickname = message.author;
         let new_nickname = message.text.substring(6);
 
-        let id = users[message.auhtor];
-        users[new_nickname] = id;
-        users[id] = null;
+        let id;
+        for (let key in users_online) {
 
-        socket.emit('new_nickname', new_nickname);
+          // checks if the new nickname is unique
+          if (users_online[key] === new_nickname) {
+            return;
+          }
+
+          if (users_online[key] === old_nickname) {
+            id = key;
+            break;
+          }
+        }
+
+        users_online[id] = null;
+        users_online[id] = new_nickname;
+
+        socket.emit('nickname_did_change', new_nickname);
+        io.sockets.emit('users_online_did_change', users_online);
 
       } else {
 
@@ -109,11 +132,13 @@ function random_nickname(callback) {
 
     let jsonContent = JSON.parse(data);
 
-    let adjective = jsonContent.adjectives[Math.floor(Math.random() * jsonContent.adjectives.length)];
-
-    let noun = jsonContent.nouns[Math.floor(Math.random() * jsonContent.nouns.length)];
-
-    let nickname = adjective.capitalized() + ' ' + noun.capitalized();
+    // generates a new unique nickname
+    let nickname;
+    do {
+      let adjective = jsonContent.adjectives[Math.floor(Math.random() * jsonContent.adjectives.length)];
+      let noun = jsonContent.nouns[Math.floor(Math.random() * jsonContent.nouns.length)];
+      nickname = adjective.capitalized() + ' ' + noun.capitalized();
+    } while (users_online[nickname] === null);
 
     callback(nickname, null);
 });
