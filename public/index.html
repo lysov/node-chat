@@ -51,17 +51,16 @@
     });
 
     // gets a nre nickname color
-    socket.on('users_online_did_change', function (users) {
+    socket.on('users_online_did_change', function (online_users) {
 
       console.log("users_online_did_change");
-      console.log(users);
+      console.log(online_users);
 
       $('.users_online').empty();
 
-      users.map(function(user) {
-        if (user !== null) {
-          $('.users_online').append('<li>' + user + '</li>')
-        }
+      online_users.forEach(function(online_user) {
+        let nickname = online_user.nickname;
+        $('.users_online').append('<li>' + nickname + '</li>');
       });
     });
   </script>

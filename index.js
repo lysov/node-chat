@@ -36,14 +36,17 @@ io.on('connection', function(socket) {
     } else {
       console.log("The new user has been given '" + nickname + "' nickname.");
       let logged_out_user_id = current_unique_id;
-      users_online[current_unique_id] = nickname;
+      users_online.push({"id": current_unique_id, "nickname": nickname, "nickname-color": null});
       current_unique_id++;
       socket.emit('nickname_and_message_history', nickname, messages);
       io.sockets.emit('users_online_did_change', users_online);
 
       socket.on('disconnect', function() {
 
-        users_online[logged_out_user_id] = null;
+        // removes the disconnected user from online users
+        console.log(users_online);
+        users_online = find_and_remove(users_online, 'id', logged_out_user_id)
+        console.log(users_online);
 
         console.log("A user with '" + logged_out_user_id + "' id has disconnected.");
 
@@ -75,22 +78,19 @@ io.on('connection', function(socket) {
         let old_nickname = message.author;
         let new_nickname = message.text.substring(6);
 
-        let id;
-        for (let key in users_online) {
+        // TODO: replace this to users
+        users_online.forEach(function(user_online) {
 
           // checks if the new nickname is unique
-          if (users_online[key] === new_nickname) {
+          if (user_online.nickname === new_nickname) {
             return;
           }
 
-          if (users_online[key] === old_nickname) {
-            id = key;
-            break;
+          // updates a nickname
+          if (user_online.nickname === old_nickname) {
+            user_online.nickname = new_nickname;
           }
-        }
-
-        users_online[id] = null;
-        users_online[id] = new_nickname;
+        });
 
         socket.emit('nickname_did_change', new_nickname);
         io.sockets.emit('users_online_did_change', users_online);
@@ -138,8 +138,18 @@ function random_nickname(callback) {
       let adjective = jsonContent.adjectives[Math.floor(Math.random() * jsonContent.adjectives.length)];
       let noun = jsonContent.nouns[Math.floor(Math.random() * jsonContent.nouns.length)];
       nickname = adjective.capitalized() + ' ' + noun.capitalized();
-    } while (users_online[nickname] === null);
+    } while (
+      // TODO: replace this to users
+      users_online.forEach(function(user_online) {
 
+        // checks if the new nickname is unique
+        if (user_online.nickname === nickname) {
+          return true;
+        } else {
+          return false;
+        }
+      })
+    );
     callback(nickname, null);
 });
 }
@@ -161,4 +171,18 @@ function Message(author, text, timestamp) {
   this.author = author;
   this.text = text;
   this.timestamp = timestamp;
+}
+
+/*
+  Removes elements, which properties are equal to the value, from the array.
+*/
+function find_and_remove(array, property, value) {
+  array.forEach(function(result, index) {
+    if(result[property] === value) {
+      //Remove from array
+      array.splice(index, 1);
+    }
+  });
+
+  return array;
 }
