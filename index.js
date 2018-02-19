@@ -9,6 +9,8 @@ let io = require('socket.io')(server);
 let path = require('path');
 let fs = require('fs');
 
+let cookie = require('cookie');
+
 const hex_rgb = require('hex-rgb');
 
 let port = 8080;
@@ -29,6 +31,11 @@ app.get('/', function(req, res) {
 io.on('connection', function(socket) {
 
   console.log("A new user has connected.");
+
+  let cookies = cookie.parse(socket.handshake.headers['cookie']);
+  console.log(cookies.user_id);
+  cookies.user_id = 97;
+  console.log(cookies.user_id);
 
   random_nickname(function(nickname, error) {
     if (error) {
