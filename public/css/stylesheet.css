@@ -1,0 +1,14 @@
+.navbar {
+  height: 64px;
+}
+.bottom-row-wrapper {
+  height: 64px;
+  padding: 15px;
+}
+.message_text_field {
+  width: 100%;
+}
+.pre-scrollable {
+  max-height: calc(100vh - 64px - 64px - 16px);
+  overflow-y: scroll;
+}

@@ -1,7 +1,8 @@
 // Dependencies
 
 // Express
-const app = require('express')();
+const express = require('express');
+const app = express();
 
 // Socket.io
 const server = require('http').Server(app);
@@ -11,11 +12,13 @@ const io = require('socket.io')(server);
 const path = require('path');
 const fs = require('fs');
 const hex_rgb = require('hex-rgb');
+const cookie = require('cookie');
 
 // Constants
 const port = 8080;
 
 // Data Model
+let users = []
 let users_online = [];
 let current_unique_id = 0;
 let messages = [];
@@ -24,49 +27,97 @@ server.listen(port, function() {
   console.log('listening on port ' + port + '.');
 });
 
-app.get('/', function(req, res) {
-  res.sendFile(path.join(__dirname, './public', 'index.html'));
-});
+app.use(express.static(__dirname + '/public'));
 
 io.on('connection', function(socket) {
 
   console.log('A new user has connected.');
 
-  // generates a nickname for the new user
-  random_nickname(function(nickname, error) {
+  const client_cookie = socket.request.headers.cookie;
 
-    if (error) {
-      console.log('Error');
-    } else {
+  if (client_cookie !== undefined) {
 
-      console.log('The new user has been given "' + nickname + '" nickname.');
+    const user_id_from_cookie = cookie.parse(client_cookie).user_id;
+
+    let returning_user;
+    users.forEach(function(user) {
+      if (user_id_from_cookie == user.user_id) {
+        returning_user = user;
+      }
+    });
+
+    let is_returning_user_online = false;
+    users_online.forEach(function(online_user) {
+      if (user_id_from_cookie == online_user.user_id) {
+        is_returning_user_online = true;
+      }
+    });
+
+    const nickname = returning_user.nickname;
+
+    // sends a generated nickname and message history to the new user
+    socket.emit('nickname_and_id_and_message_history', nickname, user_id_from_cookie, messages);
+
+    if (is_returning_user_online === false) {
 
       // adds the new user to the online users
-      const logged_out_user_id = current_unique_id;
-      const nickname_color = {'alpha': 255, 'blue': 0, 'green': 0, 'red': 0};
-      users_online.push({'user_id': current_unique_id, 'nickname': nickname, 'nickname_color': nickname_color});
+      users_online.push(returning_user);
+    }
 
-      // sends a generated nickname and message history to the new user
-      socket.emit('nickname_and_id_and_message_history', nickname, current_unique_id, messages);
-      current_unique_id++;
+    // sends an updated list of online users to the online users
+    io.sockets.emit('users_online_did_change', users_online);
+
+    socket.on('disconnect', function() {
+
+      // removes the disconnected user from the list of online users
+      users_online.removeIf(function(user_online, idx) {
+        return user_online.user_id == user_id_from_cookie;
+      });
+
+      console.log('A user with "' + user_id_from_cookie + '" id has disconnected.');
 
       // sends an updated list of online users to the online users
       io.sockets.emit('users_online_did_change', users_online);
+    });
+  } else {
+    // generates a nickname for the new user
+    random_nickname(function(nickname, error) {
 
-      socket.on('disconnect', function() {
+      if (error) {
+        console.log('Error');
+      } else {
 
-        // removes the disconnected user from the list of online users
-        users_online.removeIf( function(user_online, idx) {
-          return user_online.user_id === logged_out_user_id;
-        });
+        console.log('The new user has been given "' + nickname + '" nickname.');
 
-        console.log('A user with "' + logged_out_user_id + '" id has disconnected.');
+        // adds the new user to the users
+        const logged_out_user_id = current_unique_id;
+        const nickname_color = {'alpha': 255, 'blue': 0, 'green': 0, 'red': 0};
+        users.push({'user_id': current_unique_id, 'nickname': nickname, 'nickname_color': nickname_color});
+        // adds the new user to the online users
+        users_online.push({'user_id': current_unique_id, 'nickname': nickname, 'nickname_color': nickname_color});
+
+        // sends a generated nickname and message history to the new user
+        socket.emit('nickname_and_id_and_message_history', nickname, current_unique_id, messages);
+        current_unique_id++;
 
         // sends an updated list of online users to the online users
         io.sockets.emit('users_online_did_change', users_online);
-      });
-    }
-  });
+
+        socket.on('disconnect', function() {
+
+          // removes the disconnected user from the list of online users
+          users_online.removeIf( function(user_online, idx) {
+            return user_online.user_id == logged_out_user_id;
+          });
+
+          console.log('A user with "' + logged_out_user_id + '" id has disconnected.');
+
+          // sends an updated list of online users to the online users
+          io.sockets.emit('users_online_did_change', users_online);
+        });
+      }
+    });
+  }
 
   // new message from the client
   socket.on('new_message_from_client', function (message) {
@@ -89,6 +140,13 @@ io.on('connection', function(socket) {
           }
         });
 
+        // changes a nickname_color in users
+        users.forEach(function(user) {
+          if (message.author_nickname === user.nickname) {
+            user.nickname_color = new_nickname_color_rgb;
+          }
+        });
+
         socket.emit('nickname_color_did_change', new_nickname_color_rgb);
       } catch (error) {
         console.log('Invalid /nickcolor command');
@@ -102,34 +160,48 @@ io.on('connection', function(socket) {
         const old_nickname = message.author_nickname;
         const new_nickname = message.text.substring(6);
 
-        // TODO: replace the code to users
-        users_online.forEach(function(user_online) {
-
-          // checks if the new nickname is unique
-          if (user_online.nickname === new_nickname) {
-            return;
-          }
-
-          // updates a nickname
-          if (user_online.nickname === old_nickname) {
-            user_online.nickname = new_nickname;
-            return user_online;
+        // checks if the nickname unique
+        let is_new_nickname_unique = true;
+        users.forEach(function(user) {
+          if (user.nickname === new_nickname) {
+            console.log('"' + user.nickname + '" nickname is not unique.');
+            is_new_nickname_unique = false;
+            return user;
           }
         });
 
-        socket.emit('nickname_did_change', new_nickname);
-        io.sockets.emit('users_online_did_change', users_online);
+        // updates a nickname in the users
+        if (is_new_nickname_unique) {
+
+          // updates a nickname in the users
+          users.forEach(function(user) {
+            if (user.nickname === old_nickname) {
+              user.nickname = new_nickname;
+              return user;
+            }
+          });
+
+          // updates a nickname in the online_users
+          users_online.forEach(function(user_online) {
+            // updates a nickname
+            if (user_online.nickname === old_nickname) {
+              user_online.nickname = new_nickname;
+              return user_online;
+            }
+          });
+
+          socket.emit('nickname_did_change', new_nickname);
+          io.sockets.emit('users_online_did_change', users_online);
+        }
 
       } else {
 
         // simple message
 
-        // TODO: replace this to users
+        users.forEach(function(user) {
+          if (message.author_nickname === user.nickname) {
 
-        users_online.forEach(function(user_online) {
-          if (message.author_nickname === user_online.nickname) {
-
-            message.author_nickname_color = user_online.nickname_color;
+            message.author_nickname_color = user.nickname_color;
             message.timestamp = Date.now();
             messages.push(message);
             console.log("New massage has been recieved: '" + message.text + "'.");
