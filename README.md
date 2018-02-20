@@ -2,8 +2,8 @@
 Real time chat implemented with Node.js.
 
 ## Prerequisites
-You’ll need Node.js framework.
-* [Node.js](https://nodejs.org/en/).
+You’ll need [Node.js](https://nodejs.org/en/) framework.
+* Once you've installed [Node.js](https://nodejs.org/en/). Go to the project directory and type `npm install` in the terminal to install all the dependancies.
 
 ## Running
 1. Remove `localhost` cookies from the browser you're going to use and do it each time you re-start the application.
@@ -20,7 +20,7 @@ You’ll need Node.js framework.
 * [npm](https://www.npmjs.com) - Dependency Management.
 
 ## Authors
-* **Anton Lysov**
+* [Anton Lysov](https://www.github.com/lysov)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
