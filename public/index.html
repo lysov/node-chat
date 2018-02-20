@@ -6,44 +6,83 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Material Design for Bootstrap fonts and icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
-    <!-- Material Design for Bootstrap CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <style>
+    .navbar {
+      height: 64px;
+    }
+    .bottom-row-wrapper {
+      height: 64px;
+      padding: 15px;
+    }
+    .message_text_field {
+      width: 100%;
+    }
+    .pre-scrollable {
+      max-height: calc(100vh - 64px - 64px - 16px);
+      overflow-y: scroll;
+    }
+    </style>
 
     <title>Node Chat</title>
   </head>
 
   <body>
     <!-- navigation bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-dark bg-dark">
       <a class="navbar-brand" href="">Node Chat</a>
-      <ul class="navbar-nav ml-auto">
-          <span class="navbar-text nick">
-            Nick
-          </span>
-      </ul>
+      <span class="navbar-text ml-auto">
+        <a class="nick" href="#" data-toggle="hover-over-nick" data-placement="bottom" data-html="true" title="To change your nickname: <code>/nick new-nickname</code><br>To change your nickname color: <code>/nickcolor RRGGBB</code>">Nick</a>
+      </span>
     </nav>
     <!-- end of navigation bar -->
 
     <div class="container-fluid">
+      <div class="row" style="padding: 15px 0px;">
+        <!-- online users -->
+        <div class="col-3 pre-scrollable" >
+          <ul class="list-group users_online">
+          </ul>
+        </div>
+        <!-- end of online users -->
 
-      <p>
-        <!-- You've logged in as <span class="name">Anton</span>.<br> -->
-        Users Online<br>
-        <ul class="users_online">
-        </ul>
-        Messages<br>
-        <ul class="messages">
-        </ul>
-      </p>
-      <input type="text" class="message_text_field" value="Write message...">
-
+        <!-- messages -->
+        <div class="col-9 pre-scrollable">
+          <ul class="list-group messages">
+          </ul>
+        </div>
+        <!-- end of messages -->
+      </div>
     </div>
 
+    <div class="container-fluid">
+      <div class="row bottom-row-wrapper fixed-bottom disabled">
+        <!-- number of online users container-->
+        <div class="col-3">
+          <p class="number_of_users_online text-center">
+            0 users online
+          </p>
+        </div>
+        <!-- end of number of online users container-->
+
+        <!-- wrtie a new message container -->
+        <div class="col-9">
+          <input type="text" class="message_text_field text-dark form-control" placeholder="Write message...">
+        </div>
+        <!-- end of wrtie a new message container -->
+      </div>
+    </div>
+
+    <!-- jQuery first, then Bootstrap JS, then Popper JS, then Socket.io -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
     <script>
-    let socket = io();
+    const socket = io();
 
     // gets a new nickname
     socket.on('nickname_did_change', function (nickname) {
@@ -67,8 +106,7 @@
         let text = message.text;
         let author_nickname_color = message.author_nickname_color;
         let author_nickname_color_rgb = 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')';
-        $('.messages').append('<li>' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
-        //$('.messages').append('<li style="color:' + 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')">' + time + ' ' + author + ': ' + text + '</li>');
+        $('.messages').append('<li class="list-group-item">' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
       });
     });
 
@@ -88,7 +126,7 @@
       let text = new_message.text;
       let author_nickname_color = new_message.author_nickname_color;
       let author_nickname_color_rgb = 'rgb(' + author_nickname_color.red + ',' + author_nickname_color.green + ',' + author_nickname_color.blue + ')';
-      $('.messages').append('<li>' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
+      $('.messages').append('<li class="list-group-item">' + time + ' <span style="color: ' + author_nickname_color_rgb +'">' + author + '</span>: ' + text + '</li>');
     });
 
     // gets a new nickname color
@@ -105,52 +143,32 @@
 
       $('.users_online').empty();
 
+      let number_of_users_online = 0;
       online_users.forEach(function(online_user) {
         let nickname = online_user.nickname;
-        $('.users_online').append('<li>' + nickname + '</li>');
+        let nickname_color = online_user.nickname_color;
+        let nickname_color_rgb = 'rgb(' + nickname_color.red + ',' + nickname_color.green + ',' + nickname_color.blue + ')';
+        $('.users_online').append('<li class="list-group-item" style="color: ' + nickname_color_rgb + ';">' + nickname + '</li>');
+        number_of_users_online++;
       });
+      $(".number_of_users_online").text(number_of_users_online + ' users online');
     });
 
-    // sends a new message
     $(document).ready(function() {
+      // sends a new message
       $(".message_text_field").on("keyup", function (e) {
-      if (e.keyCode == 13) {
-        let author = $(".nick").text();
-        let text = $(this).val();
-        let message = {"author_nickname": author, "text": text};
-        // TODO: delete the code below
-        console.log('Sending a new message to the server');
-        console.log(message);
-        socket.emit('new_message_from_client', message);
-        $(this).val("");
-      }
-      });
-
-      // removes a placeholder from the text field
-      $(".message_text_field").click(function() {
-        if ($(this).val() === "Write message...") {
+        if (e.keyCode == 13) {
+          const author = $(".nick").text();
+          const text = $(this).val();
+          const message = {"author_nickname": author, "text": text};
+          socket.emit('new_message_from_client', message);
           $(this).val("");
         }
       });
-
-      // places a placeholder if a user has not typed anything
-      $(document).on('click', function(event) {
-        if (!$(event.target).closest(".message_text_field").length) {
-          if ($(".message_text_field").val() === "") {
-            $(".message_text_field").val("Write message...");
-          }
-        }
-      });
+      // hover over nick
+      $('[data-toggle="hover-over-nick"]').tooltip();
     });
-    </script>
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Bootstrap JS, then Material JS on top of Bootstrap JS, then Socket.io -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>$(document).ready(function() { $('body').bootstrapMaterialDesign(); });</script>
+  </script>
   </body>
 
 </html>
