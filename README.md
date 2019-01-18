@@ -1,6 +1,9 @@
 # Node Chat
 Real time chat implemented with Node.js.
 
+## Screenshot
+![Screenshot](https://i.imgur.com/313BOEK.png)
+
 ## Prerequisites
 You’ll need [Node.js](https://nodejs.org/en/) framework.
 * Once you've installed [Node.js](https://nodejs.org/en/). Go to the project directory and type `npm install` in the terminal to install all the dependancies.
